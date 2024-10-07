@@ -3,26 +3,16 @@ import os
 
 import aws_cdk as cdk
 
-from glue_cdk.glue_cdk_stack import GlueCdkStack
-
+from cdk_stacks.kms.kms_stack import KmsStack
+from cdk_stacks.s3.s3_stack import S3Stack
+from cdk_stacks.iam_role.iam_role_stack import IamRoleStack
 
 app = cdk.App()
-GlueCdkStack(app, "GlueCdkStack",
-    # If you don't specify 'env', this stack will be environment-agnostic.
-    # Account/Region-dependent features and context lookups will not work,
-    # but a single synthesized template can be deployed anywhere.
 
-    # Uncomment the next line to specialize this stack for the AWS Account
-    # and Region that are implied by the current CLI configuration.
+kms_stack = KmsStack(app, "KmsStack")
+iam_role_stack = IamRoleStack(app, "IamRoleStack")
+s3_stack = S3Stack(app, "S3Stack", kms_key=kms_stack.kms_key, iam_role=iam_role_stack.glue_iam_role)
 
-    #env=cdk.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
 
-    # Uncomment the next line if you know exactly what Account and Region you
-    # want to deploy the stack to. */
-
-    #env=cdk.Environment(account='123456789012', region='us-east-1'),
-
-    # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
-    )
 
 app.synth()
