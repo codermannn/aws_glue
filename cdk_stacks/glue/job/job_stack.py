@@ -17,21 +17,29 @@ class JobStack(Stack):
                  **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-                        # Create string variables for SSM parameters
-        source_folder = ssm.StringParameter.from_string_parameter_name(
-            self, "SourceFolder",
-            string_parameter_name="/glue-poc/source-folder"
+        self.bucket_name = ssm.StringParameter.from_string_parameter_name(
+            self, "BucketName",
+            string_parameter_name="/glue-poc/bucket-name"
         ).string_value
 
-        destination_folder = ssm.StringParameter.from_string_parameter_name(
-            self, "DestinationFolder",
-            string_parameter_name="/glue-poc/destination-folder"
+        # Create string variables for SSM parameters
+        source_folder_path = ssm.StringParameter.from_string_parameter_name(
+            self, 'SourceFolder',
+            string_parameter_name='/glue-poc/source-folder'
         ).string_value
+        source_folder = f"{self.bucket_name}/{source_folder_path}"
 
-        temp_folder = ssm.StringParameter.from_string_parameter_name(
-            self, "TempFolder",
-            string_parameter_name="/glue-poc/temp-folder"
+        destination_folder_path = ssm.StringParameter.from_string_parameter_name(
+            self, 'DestinationFolder',
+            string_parameter_name='/glue-poc/destination-folder'
         ).string_value
+        destination_folder = f"{self.bucket_name}/{destination_folder_path}"
+
+        failed_folder_path = ssm.StringParameter.from_string_parameter_name(
+            self, 'FailedFolder',
+            string_parameter_name='/glue-poc/failed-folder'
+        ).string_value
+        failed_folder = f"{self.bucket_name}/{failed_folder_path}"
 
         dynamodb_table_name = ssm.StringParameter.from_string_parameter_name(
             self, "DynamoDBTableName",
@@ -42,12 +50,17 @@ class JobStack(Stack):
             self, "EtlScriptsFolder",
             string_parameter_name="/glue-poc/etl-scripts-folder"
         ).string_value
+        
+        job_name=ssm.StringParameter.from_string_parameter_name(
+                self, "GlueJobName",
+                string_parameter_name="/glue-poc/glue-job-name"
+        ).string_value
 
         # Create Glue ETL Job
         glue_job = glue.CfnJob(
             self,
             "MyETLJob",
-            name="my_etl_job",
+            name=job_name,
             role=glue_role.role_arn,
             command=glue.CfnJob.JobCommandProperty(
                 name="glueetl",
@@ -55,10 +68,11 @@ class JobStack(Stack):
                 script_location=s3_bucket.s3_url_for_object(f"{etl_scripts_folder}/script.py"),
             ),
             default_arguments={
-                "--source_folder": source_folder,
-                "--destination_folder": destination_folder,
-                "--temp_folder": temp_folder,
-                "--dynamodb_table_name": dynamodb_table_name
+                "--job_name": job_name,
+                "--source_prefix": source_folder,
+                "--destination_prefix": destination_folder,
+                "--failed_prefix": failed_folder,
+                "--dynamodb_table_name": dynamodb_table_name,
             },
             glue_version="3.0",
             max_capacity=2,

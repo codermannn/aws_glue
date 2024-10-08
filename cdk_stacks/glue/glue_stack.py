@@ -19,8 +19,7 @@ class GlueStack(Stack):
         glue_role = iam.Role.from_role_arn(
             self,
             "ImportedGlueRole",
-            role_arn=glue_role_arn,
-            mutable=False
+            role_arn=glue_role_arn
         )
 
         database_stack = DatabaseStack(self, "DatabaseStack")

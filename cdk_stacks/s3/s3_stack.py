@@ -13,8 +13,13 @@ from constructs import Construct
 
 class S3Stack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, kms_key: kms.Key, iam_role_arn: str, lambda_function_arn: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, kms_key: kms.Key, iam_role_arn: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+
+        self.bucket_name = ssm.StringParameter.from_string_parameter_name(
+            self, "BucketName",
+            string_parameter_name="/glue-poc/bucket-name"
+        ).string_value
 
         # Create string variables for SSM parameters
         self.schema_folder = ssm.StringParameter.from_string_parameter_name(
@@ -42,11 +47,16 @@ class S3Stack(Stack):
             string_parameter_name="/glue-poc/etl-scripts-folder"
         ).string_value
 
+        self.failed_folder = ssm.StringParameter.from_string_parameter_name(
+            self, "FailedFolder",
+            string_parameter_name="/glue-poc/failed-folder"
+        ).string_value
+
         # Create an S3 bucket with server-side encryption using the provided KMS key
         self.bucket = s3.Bucket(
             self, 
             "GluePocBucket",
-            bucket_name="glue-poc-bucket-888888a04-e536-4a3e-a38e-8920d6a23892",
+            bucket_name=self.bucket_name,
             encryption=s3.BucketEncryption.KMS,
             encryption_key=kms_key,
             versioned=True,
@@ -62,9 +72,10 @@ class S3Stack(Stack):
         iam_role = iam.Role.from_role_arn(
             self,
             "ImportedIamRole",
-            role_arn=iam_role_arn,
-            mutable=False
+            role_arn=iam_role_arn
         )
+
+        self.bucket.grant_read(iam_role)
 
         # Create a schema folder inside the bucket
         self.schema_folder_deployment = s3deploy.BucketDeployment(
@@ -76,18 +87,18 @@ class S3Stack(Stack):
             prune=False,
             retain_on_delete=False,
         )
-        self.bucket.grant_read(iam_role, f"{self.schema_folder}/*")
+        self.bucket.grant_read(iam_role, f"{self.schema_folder}")
 
         self.etl_scripts_folder_deployment = s3deploy.BucketDeployment(
             self,
             "EtlScriptsDeployment",
-            sources=[s3deploy.Source.asset("assets/etl_scripts/script.py.zip")],
+            sources=[s3deploy.Source.asset("assets/etl_scripts")],
             destination_bucket=self.bucket,
             destination_key_prefix=self.etl_scripts_folder,
             prune=False,
             retain_on_delete=False,
         )
-        self.bucket.grant_read(iam_role, f"{self.etl_scripts_folder}/*")
+        self.bucket.grant_read(iam_role, f"{self.etl_scripts_folder}")
 
         self.source_folder_deployment  = s3deploy.BucketDeployment(
             self,
@@ -98,7 +109,7 @@ class S3Stack(Stack):
             prune=False,
             retain_on_delete=False,
         )
-        self.bucket.grant_read(iam_role, f"{self.source_folder}/*")
+        self.bucket.grant_read(iam_role, f"{self.source_folder}")
 
         self.destination_folder_deployment = s3deploy.BucketDeployment(
             self,
@@ -109,7 +120,18 @@ class S3Stack(Stack):
             prune=False,
             retain_on_delete=False,
         )
-        self.bucket.grant_write(iam_role, f"{self.destination_folder}/*")
+        self.bucket.grant_write(iam_role, f"{self.destination_folder}")
+
+        self.failed_folder_deployment = s3deploy.BucketDeployment(
+            self,
+            "FailedFolderDeployment",
+            sources=[s3deploy.Source.asset("assets/empty")],
+            destination_bucket=self.bucket,
+            destination_key_prefix=self.failed_folder,
+            prune=False,
+            retain_on_delete=False,
+        )
+        self.bucket.grant_write(iam_role, f"{self.failed_folder}")
 
         # Create a temp folder inside the bucket
         temp_folder = s3deploy.BucketDeployment(
@@ -121,15 +143,6 @@ class S3Stack(Stack):
             prune=False,
             retain_on_delete=False,
         )
-        self.bucket.grant_read_write(iam_role, f"{self.temp_folder}/*")
+        self.bucket.grant_read_write(iam_role, f"{self.temp_folder}")
 
-        # Create an S3 event notification for the source folder
-        # self.bucket.add_event_notification(
-        #     s3.EventType.OBJECT_CREATED,
-        #     s3n.LambdaDestination(lambda_.Function.from_function_arn(
-        #         self,
-        #         "NotificationLambda",
-        #         lambda_function_arn
-        #     )),
-        #     s3.NotificationKeyFilter(prefix=f"{self.source_folder}/")
-        # )
+        self.bucket_arn = self.bucket.bucket_arn

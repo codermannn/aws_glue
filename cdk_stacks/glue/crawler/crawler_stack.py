@@ -26,6 +26,7 @@ class CrawlerStack(Stack):
                 self, "DatabaseName",
                 string_parameter_name="/glue-poc/data-catalog-name"
             ).string_value,
+            table_prefix="glue_poc_",  # Add a prefix to the table name
             targets=glue.CfnCrawler.TargetsProperty(
                 s3_targets=[
                     glue.CfnCrawler.S3TargetProperty(

@@ -15,8 +15,7 @@ class DynamoStack(Stack):
         iam_role = iam.Role.from_role_arn(
             self,
             "ImportedIamRole",
-            role_arn=iam_role_arn,
-            mutable=False
+            role_arn=iam_role_arn
         )
 
         table_name=ssm.StringParameter.from_string_parameter_name(

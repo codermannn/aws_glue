@@ -8,6 +8,12 @@ class SSMStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        self.bucket_name = ssm.StringParameter(
+            self, "BucketName",
+            parameter_name="/glue-poc/bucket-name",
+            string_value="glue-poc-bucket-888888a04-e536-4a3e-a38e-8920d6a23892"
+        )
+
         self.schema_folder = ssm.StringParameter(
             self, "SchemaFolder",
             parameter_name="/glue-poc/schema-folder",
@@ -37,6 +43,18 @@ class SSMStack(Stack):
             self, "TempFolder",
             parameter_name="/glue-poc/temp-folder",
             string_value="temp"
+        )
+
+        self.glue_job_name = ssm.StringParameter(
+            self, "GlueJobName",
+            parameter_name="/glue-poc/glue-job-name",
+            string_value="glue-poc-etl-job"
+        )
+
+        self.failed_folder = ssm.StringParameter(
+            self, "FailedFolder",
+            parameter_name="/glue-poc/failed-folder",
+            string_value="failed"
         )
 
         self.data_catalog_name = ssm.StringParameter(

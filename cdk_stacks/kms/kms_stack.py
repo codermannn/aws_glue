@@ -24,8 +24,7 @@ class KmsStack(Stack):
         iam_role = iam.Role.from_role_arn(
             self,
             "ImportedIamRole",
-            role_arn=iam_role_arn,
-            mutable=False
+            role_arn=iam_role_arn
         )
 
         # Grant the IAM role access to the KMS key
