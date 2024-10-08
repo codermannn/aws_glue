@@ -13,7 +13,7 @@ from constructs import Construct
 
 class S3Stack(Stack):
 
-    def __init__(self, scope: Construct, construct_id: str, kms_key: kms.Key, iam_role: iam.Role, lambda_function_arn: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, kms_key: kms.Key, iam_role_arn: str, lambda_function_arn: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # Create string variables for SSM parameters
@@ -56,6 +56,14 @@ class S3Stack(Stack):
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
             bucket_key_enabled=True,
+        )
+
+        # Create an IAM role object from the provided ARN
+        iam_role = iam.Role.from_role_arn(
+            self,
+            "ImportedIamRole",
+            role_arn=iam_role_arn,
+            mutable=False
         )
 
         # Create a schema folder inside the bucket

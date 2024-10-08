@@ -19,3 +19,6 @@ class IamRoleStack(Stack):
                 iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSGlueServiceRole")
             ]
         )
+
+        # Assign the IAM role ARN to a variable
+        self.iam_role_arn = self.iam_role.role_arn

@@ -16,19 +16,19 @@ from cdk_stacks.ssm.ssm_stack import SSMStack
 app = cdk.App()
 
 
-ssm_stack = SSMStack(app, "SSMStack")
-iam_role_stack = IamRoleStack(app, "IamRoleStack")
-kms_stack = KmsStack(app, "KmsStack", iam_role_stack.iam_role)
-notification_lambda_stack = LambdaStack(app, "NotificationLambdaStack", iam_role_stack.iam_role)
-s3_stack = S3Stack(app, "S3Stack", kms_key=kms_stack.kms_key, iam_role=iam_role_stack.iam_role, lambda_function_arn=notification_lambda_stack.lambda_function_arn)
-sns_stack = SnsStack(app, "SnsStack")
-dynamo_stack = DynamoStack(app, "DynamoStack", iam_role_stack.iam_role)
-glue_stack = GlueStack(app, "GlueStack", s3_stack.bucket, dynamo_stack.table, iam_role_stack.iam_role)
-
-# s3_stack.bucket.add_event_notification(
-#     s3.EventType.OBJECT_CREATED,
-#     s3.NotificationKeyFilter(prefix="my-folder/"),
-#     cdk.aws_s3_notifications.LambdaDestination(notification_lambda_stack.lambda_function)
-# )
+ssm_stack = SSMStack(scope=app, construct_id="SSMStack")
+iam_role_stack = IamRoleStack(scope=app, construct_id="IamRoleStack")
+kms_stack = KmsStack(scope=app, construct_id="KmsStack", iam_role_arn=iam_role_stack.iam_role_arn)
+notification_lambda_stack = LambdaStack(scope=app, construct_id="NotificationLambdaStack", iam_role_arn=iam_role_stack.iam_role_arn)
+s3_stack = S3Stack(scope=app, construct_id="S3Stack", kms_key=kms_stack.kms_key, iam_role_arn=iam_role_stack.iam_role_arn, lambda_function_arn=notification_lambda_stack.lambda_function_arn)
+sns_stack = SnsStack(scope=app, construct_id="SnsStack")
+dynamo_stack = DynamoStack(scope=app, construct_id="DynamoStack", iam_role_arn=iam_role_stack.iam_role_arn)
+glue_stack = GlueStack(
+    scope=app,
+    construct_id="GlueStack",
+    bucket=s3_stack.bucket,
+    dynamo_table=dynamo_stack.table,
+    glue_role_arn=iam_role_stack.iam_role_arn
+)
 
 app.synth()
