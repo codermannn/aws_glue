@@ -46,14 +46,24 @@ class JobStack(Stack):
             string_parameter_name="/glue-poc/dynamodb-table-name"
         ).string_value
 
+        data_catalog_name = ssm.StringParameter.from_string_parameter_name(
+            self, "DataCatalogName",
+            string_parameter_name="/glue-poc/data-catalog-name"
+        ).string_value
+
+        table_prefix = ssm.StringParameter.from_string_parameter_name(
+            self, "TablePrefix",
+            string_parameter_name="/glue-poc/table-prefix"
+        ).string_value
+
         etl_scripts_folder = ssm.StringParameter.from_string_parameter_name(
             self, "EtlScriptsFolder",
             string_parameter_name="/glue-poc/etl-scripts-folder"
         ).string_value
         
-        job_name=ssm.StringParameter.from_string_parameter_name(
-                self, "GlueJobName",
-                string_parameter_name="/glue-poc/glue-job-name"
+        job_name = ssm.StringParameter.from_string_parameter_name(
+            self, "GlueJobName",
+            string_parameter_name="/glue-poc/glue-job-name"
         ).string_value
 
         # Create Glue ETL Job
@@ -73,6 +83,8 @@ class JobStack(Stack):
                 "--destination_prefix": destination_folder,
                 "--failed_prefix": failed_folder,
                 "--dynamodb_table_name": dynamodb_table_name,
+                "--database_catalog_name": data_catalog_name,
+                "--table_prefix": table_prefix,
             },
             glue_version="3.0",
             max_capacity=2,
