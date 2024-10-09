@@ -87,7 +87,7 @@ class S3Stack(Stack):
             prune=False,
             retain_on_delete=False,
         )
-        self.bucket.grant_read(iam_role, f"{self.schema_folder}")
+        self.bucket.grant_read(iam_role, f"{self.schema_folder}/*")
 
         self.etl_scripts_folder_deployment = s3deploy.BucketDeployment(
             self,
@@ -98,7 +98,7 @@ class S3Stack(Stack):
             prune=False,
             retain_on_delete=False,
         )
-        self.bucket.grant_read(iam_role, f"{self.etl_scripts_folder}")
+        self.bucket.grant_read(iam_role, f"{self.etl_scripts_folder}/*")
 
         self.source_folder_deployment  = s3deploy.BucketDeployment(
             self,
@@ -109,7 +109,8 @@ class S3Stack(Stack):
             prune=False,
             retain_on_delete=False,
         )
-        self.bucket.grant_read(iam_role, f"{self.source_folder}")
+        self.bucket.grant_read_write(iam_role, f"{self.source_folder}/*")
+        self.bucket.grant_delete(iam_role, f"{self.source_folder}/*")
 
         self.destination_folder_deployment = s3deploy.BucketDeployment(
             self,
@@ -120,7 +121,7 @@ class S3Stack(Stack):
             prune=False,
             retain_on_delete=False,
         )
-        self.bucket.grant_write(iam_role, f"{self.destination_folder}")
+        self.bucket.grant_write(iam_role, f"{self.destination_folder}/*")
 
         self.failed_folder_deployment = s3deploy.BucketDeployment(
             self,
@@ -131,7 +132,7 @@ class S3Stack(Stack):
             prune=False,
             retain_on_delete=False,
         )
-        self.bucket.grant_write(iam_role, f"{self.failed_folder}")
+        self.bucket.grant_read_write(iam_role, f"{self.failed_folder}/*")
 
         # Create a temp folder inside the bucket
         temp_folder = s3deploy.BucketDeployment(
@@ -143,6 +144,6 @@ class S3Stack(Stack):
             prune=False,
             retain_on_delete=False,
         )
-        self.bucket.grant_read_write(iam_role, f"{self.temp_folder}")
+        self.bucket.grant_read_write(iam_role, f"{self.temp_folder}/*")
 
         self.bucket_arn = self.bucket.bucket_arn

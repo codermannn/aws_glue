@@ -63,6 +63,12 @@ class SSMStack(Stack):
             string_value="glue-poc-catalog"
         )
 
+        self.table_prefix = ssm.StringParameter(
+            self, "TablePrefix",
+            parameter_name="/glue-poc/table-prefix",
+            string_value="glue_poc_"
+        )
+
         self.dynamodb_table_name = ssm.StringParameter(
             self, "DynamoDBTableName",
             parameter_name="/glue-poc/dynamodb-table-name",

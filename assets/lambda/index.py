@@ -1,15 +1,21 @@
 import json
 import boto3
 import os
+import urllib.parse
 
 def lambda_handler(event, context):
     # Initialize Glue and SSM clients
     glue = boto3.client('glue')
     ssm = boto3.client('ssm')
+    print(event)
     
     # Extract the bucket name and key (file name) from the S3 event
     bucket_name = event['Records'][0]['s3']['bucket']['name']
     file_key = event['Records'][0]['s3']['object']['key']
+
+    # Decode the bucket name and file key
+    bucket_name = urllib.parse.unquote_plus(bucket_name)
+    file_key = urllib.parse.unquote_plus(file_key)
 
     print(bucket_name)
     print(file_key)
